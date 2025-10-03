@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 def normalize_weather_data(data):
     """
     Chuẩn hoá dữ liệu JSON từ API để đưa vào DB.
     Trả về dict gọn gàng hơn.
     """
     return {
-        "dt": datetime.utcfromtimestamp(data["dt"]),
+        "dt": datetime.fromtimestamp(data["dt"], tz=timezone.utc),
         "city_name": data["name"],
         "country": data["sys"]["country"],
         "lat": data["coord"]["lat"],

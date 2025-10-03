@@ -1,40 +1,65 @@
 import streamlit as st
 import pandas as pd
-from db.connection import get_engine
+import matplotlib.pyplot as plt
+from sqlalchemy import create_engine, text
+from datetime import datetime, timedelta, timezone
+from db.db_utils import get_weather_by_city, get_all_weather_by_city, get_all_city
 
-st.set_page_config(page_title="Weather Data", page_icon="⛅")
+st.set_page_config(page_title="Weather Forecast", layout="wide")
+st.title("🌦️ Ứng dụng dự báo thời tiết (dữ liệu từ DB)")
 
-def load_data(limit=20):
-    engine = get_engine()
-    query = f"""
-        SELECT c.city_name, f.temperature, f.feels_like, 
-               f.humidity, f.wind_speed, f.weather_desc, f.dt
-        FROM fact_weather f
-        JOIN dim_city c ON f.city_id = c.city_id
-        ORDER BY f.dt DESC
-        LIMIT {limit};
-    """
-    df = pd.read_sql(query, engine)
-    return df
+city_name_df = get_all_city()
 
-st.title("📊 Weather Fact Table Viewer")
+# Lấy danh sách city_name từ DataFrame
+city_list = city_name_df["city_name"].tolist() if not city_name_df.empty else []
 
-limit = st.slider("Số dòng muốn xem:", 5, 100, 20)
-df = load_data(limit)
+# Chọn thành phố từ selectbox (hiện danh sách)
+if city_list:
+    city = st.selectbox("Chọn thành phố:", city_list, index=0)
+else:
+    st.warning("⚠️ Không có dữ liệu thành phố trong database")
+    city = None
 
-# Hiển thị dạng bảng
-st.dataframe(df, use_container_width=True)
+if st.button("Xem thời tiết"):
+    
+    current_df = get_weather_by_city(str(city))
 
-# Hiển thị từng bản ghi dạng "card"
-st.subheader("🌍 Chi tiết thời tiết")
-for _, row in df.iterrows():
-    with st.container():
-        st.markdown(f"""
-        **Thành phố:** {row['city_name']}  
-        - 🌡️ Nhiệt độ: {row['temperature']}°C (cảm giác {row['feels_like']}°C)  
-        - ☁️ Trạng thái: {row['weather_desc']}  
-        - 💧 Độ ẩm: {row['humidity']}%  
-        - 💨 Gió: {row['wind_speed']} m/s  
-        - 🕒 Thời gian: {row['dt']}
-        """)
-        st.markdown("---")
+    if not current_df.empty:
+        st.subheader(f"☀️ Thời tiết hiện tại tại {city}")
+        row = current_df.iloc[0]
+        st.write(f"Nhiệt độ: {row['temperature']}°C")
+        st.write(f"Độ ẩm: {row['humidity']}%")
+        st.write(f"Tốc độ gió: {row['wind_speed']} m/s")
+        st.write(f"Mô tả: {row['weather_desc']}")
+    else:
+        st.warning("Không tìm thấy dữ liệu trong DB.")
+        st.stop()
+
+    forecast_df = get_all_weather_by_city(str(city))
+
+    st.subheader(f"📅 Biểu đồ thay đổi tại {city}")
+    st.dataframe(forecast_df)
+
+    if not forecast_df.empty:
+    # Lấy ngày dạng MM-DD
+        forecast_df["time"] = pd.to_datetime(forecast_df["dt"]).dt.strftime("%m-%d")
+
+        # Tạo 3 cột (sẽ tự responsive trên Streamlit)
+        cols = st.columns(3)
+
+        charts = [
+            ("Nhiệt độ", "temperature", "°C", "red", "o"),
+            ("Độ ẩm", "humidity", "%", "blue", "s"),
+            ("Tốc độ gió", "wind_speed", "m/s", "green", "^"),
+        ]
+
+        for (title, colname, ylabel, color, marker), col in zip(charts, cols):
+            with col:
+                fig, ax = plt.subplots(figsize=(4, 4))
+                ax.plot(forecast_df["time"], forecast_df[colname], marker=marker, color=color)
+                ax.set_title(title)
+                ax.set_xlabel("Ngày")
+                ax.set_ylabel(ylabel)
+                ax.grid(True)
+                st.pyplot(fig)
+
