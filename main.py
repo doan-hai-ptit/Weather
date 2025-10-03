@@ -6,7 +6,6 @@ city_list = [
     "Haiphong,VN",             # Hải Phòng
     "Da Nang,VN",              # Đà Nẵng
     "Can Tho,VN",              # Cần Thơ
-
     "An Giang,VN",             # Long Xuyên
     "Vung Tau,VN",             # Bà Rịa - Vũng Tàu
     "Bac Giang,VN",            # Bắc Giang

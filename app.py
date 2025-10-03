@@ -4,24 +4,46 @@ import matplotlib.pyplot as plt
 from sqlalchemy import create_engine, text
 from datetime import datetime, timedelta, timezone
 from db.db_utils import get_weather_by_city, get_all_weather_by_city, get_all_city
+from etl import run_pipeline
 
 st.set_page_config(page_title="Weather Forecast", layout="wide")
 st.title("🌦️ Ứng dụng dự báo thời tiết (dữ liệu từ DB)")
 
+# ---------------------------------------------------
+# Hiển thị phần chọn thành phố
 city_name_df = get_all_city()
-
-# Lấy danh sách city_name từ DataFrame
 city_list = city_name_df["city_name"].tolist() if not city_name_df.empty else []
 
-# Chọn thành phố từ selectbox (hiện danh sách)
 if city_list:
     city = st.selectbox("Chọn thành phố:", city_list, index=0)
 else:
     st.warning("⚠️ Không có dữ liệu thành phố trong database")
     city = None
 
-if st.button("Xem thời tiết"):
-    
+# ---------------------------------------------------
+# Hai nút trên cùng một hàng
+col1, col2 = st.columns(2)
+
+show_weather = False  # biến cờ
+update_data = False
+
+with col1:
+    if st.button("Xem thời tiết"):
+        show_weather = True
+
+with col2:
+    if st.button("🔄 Cập nhật dữ liệu"):
+        update_data = True
+
+# ---------------------------------------------------
+# Xử lý nút bấm
+if update_data:
+    with st.spinner("Đang cập nhật dữ liệu thời tiết..."):
+        for c in city_list:
+            run_pipeline(c)
+    st.success("✅ Đã cập nhật dữ liệu xong!")
+
+if show_weather and city:
     current_df = get_weather_by_city(str(city))
 
     if not current_df.empty:
@@ -41,12 +63,10 @@ if st.button("Xem thời tiết"):
     st.dataframe(forecast_df)
 
     if not forecast_df.empty:
-    # Lấy ngày dạng MM-DD
         forecast_df["time"] = pd.to_datetime(forecast_df["dt"]).dt.strftime("%m-%d")
 
-        # Tạo 3 cột (sẽ tự responsive trên Streamlit)
+        # tạo 3 biểu đồ ngang hàng
         cols = st.columns(3)
-
         charts = [
             ("Nhiệt độ", "temperature", "°C", "red", "o"),
             ("Độ ẩm", "humidity", "%", "blue", "s"),
@@ -62,4 +82,3 @@ if st.button("Xem thời tiết"):
                 ax.set_ylabel(ylabel)
                 ax.grid(True)
                 st.pyplot(fig)
-
