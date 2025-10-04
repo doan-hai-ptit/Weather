@@ -1,4 +1,4 @@
-from etl import run_pipeline
+from etl import run_pipeline, run_forecast_pipeline
 
 city_list = [
     "Hanoi,VN",                # Hà Nội
@@ -67,4 +67,5 @@ city_list = [
 
 if __name__ == "__main__":
     for i in city_list:
-        run_pipeline(i)
+        # run_pipeline(i)
+        run_forecast_pipeline(i)

@@ -52,3 +52,35 @@ def save_to_db(city, record):
     finally:
         cur.close()
         conn.close()
+        
+def save_forecast_to_db(record):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        forecast_for = record["dt"].date()  # ngày dự báo (từ timestamp)
+
+        cur.execute("""
+            INSERT INTO fact_weather_forecast_hourly
+            (city_id, dt, temperature, feels_like, humidity, wind_speed, weather_desc, visibility, collected_at)
+            SELECT city_id, %s, %s, %s, %s, %s, %s, %s, NOW()
+            FROM dim_city
+            WHERE city_name = %s
+        """, (
+            record["dt"],            # dt
+            record["temp"],          # temperature
+            record["feels_like"],    # feels_like
+            record["humidity"],      # humidity
+            record["wind_speed"],    # wind_speed
+            record["weather_desc"],  # weather_desc
+            record["visibility"],    # visibility
+            record["city_name"]      # city_name (WHERE)
+        ))
+
+        conn.commit()
+        print(f"✅ Đã lưu dự báo thời tiết theo giờ cho {record['city_name']} lúc {record['dt']}")
+    except Exception as e:
+        conn.rollback()
+        print("❌ Lỗi khi lưu DB:", e)
+    finally:
+        cur.close()
+        conn.close()
