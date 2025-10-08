@@ -55,7 +55,8 @@ if collect_forecast:
         forecast_df = get_forecast_by_city(str(city))
         if forecast_df.empty:
             with st.spinner(f"Đang thu thập dữ liệu dự báo 3h/lần cho {city}..."):
-                run_forecast_pipeline(city)
+                for c in city_list:
+                    run_forecast_pipeline(c)
             st.success(f"✅ Đã thu thập và lưu dự báo thời tiết ngày mai cho {city}!")
         else:
             st.info(f"ℹ️ Dữ liệu dự báo cho {city} đã tồn tại trong DB, không cần thu thập lại.")
