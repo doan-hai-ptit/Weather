@@ -1,6 +1,6 @@
 CREATE TABLE fact_weather (
     id SERIAL PRIMARY KEY,
-    city_id INT,
+    city_id INT REFERENCES dim_city(city_id),
     dt TIMESTAMP,            -- thời điểm đo
     temperature FLOAT,
     feels_like FLOAT,
