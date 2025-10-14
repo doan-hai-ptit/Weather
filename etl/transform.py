@@ -4,8 +4,10 @@ def normalize_weather_data(data):
     Chuẩn hoá dữ liệu JSON từ API để đưa vào DB.
     Trả về dict gọn gàng hơn.
     """
+    VN_TZ = timezone(timedelta(hours=7))
+    dt_vn = datetime.fromtimestamp(data["dt"], tz=VN_TZ)
     return {
-        "dt": datetime.fromtimestamp(data["dt"], tz=timezone.utc),
+        "dt": dt_vn,
         "city_name": data["name"],
         "country": data["sys"]["country"],
         "lat": data["coord"]["lat"],

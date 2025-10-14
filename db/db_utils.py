@@ -43,7 +43,7 @@ def get_forecast_by_city(city_name: str):
         FROM fact_weather_forecast_hourly f
         JOIN dim_city c ON f.city_id = c.city_id
         WHERE LOWER(c.city_name) = LOWER(:city_name)
-          AND f.dt::date = CURRENT_DATE + INTERVAL '1 day'
+          AND (f.dt AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = CURRENT_DATE + INTERVAL '1 day'
         ORDER BY f.dt ASC
     """)
     return pd.read_sql(query, engine, params={"city_name": city_name})
@@ -56,7 +56,7 @@ def get_forecast_today_by_city(city_name: str):
         FROM fact_weather_forecast_hourly f
         JOIN dim_city c ON f.city_id = c.city_id
         WHERE LOWER(c.city_name) = LOWER(:city_name)
-          AND f.dt::date = CURRENT_DATE
+          AND (f.dt AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = CURRENT_DATE
         ORDER BY f.dt ASC
     """)
     return pd.read_sql(query, engine, params={"city_name": city_name})
